@@ -122,12 +122,12 @@ L'application ne doit pas dépendre d'un appel externe à chaque consultation d'
 
 ### Checklist
 
-- [ ] Projet Laravel fonctionnel
-- [ ] Base de données connectée
-- [ ] Migration fonctionnelle
-- [ ] Repository Git créé
-- [ ] `.env.example` propre
-- [ ] README initial
+- [x] Projet Laravel fonctionnel
+- [x] Base de données connectée
+- [x] Migration fonctionnelle
+- [x] Repository Git créé
+- [x] `.env.example` propre
+- [x] README initial
 
 ---
 
@@ -351,13 +351,13 @@ Prévoir :
 
 ### Checklist
 
-- [ ] Register
-- [ ] Login
-- [ ] Logout
-- [ ] User connecté
-- [ ] Middleware auth
-- [ ] Sanctum
-- [ ] Tests d'authentification
+- [x] Register
+- [x] Login
+- [x] Logout
+- [x] User connecté
+- [x] Middleware auth
+- [x] Sanctum
+- [x] Tests d'authentification
 
 ---
 

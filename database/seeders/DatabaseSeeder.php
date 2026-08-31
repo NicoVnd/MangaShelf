@@ -2,24 +2,41 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed the application's database with base administrative and test users.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Administrateur principal
+        User::firstOrCreate(
+            ['email' => 'nicolas.vdm59@gmail.com'],
+            [
+                'name' => 'Nicolas VDM',
+                'password' => Hash::make('password'),
+                'role' => UserRole::Admin,
+                'email_verified_at' => now(),
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Utilisateur de test
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => Hash::make('password'),
+                'role' => UserRole::User,
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }
