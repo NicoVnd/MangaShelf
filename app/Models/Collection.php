@@ -78,6 +78,17 @@ class Collection extends Model
     }
 
     /**
+     * Mangas tracked in this collection.
+     *
+     * @return BelongsToMany<Manga, $this>
+     */
+    public function mangas(): BelongsToMany
+    {
+        return $this->belongsToMany(Manga::class, 'collection_mangas')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

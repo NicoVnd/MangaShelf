@@ -20,6 +20,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $author
  * @property string|null $status
  * @property int|null $total_volumes
+ * @property float|null $score
+ * @property array<int, string>|null $genres
  * @property string|null $cover_url
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -34,6 +36,8 @@ use Illuminate\Support\Carbon;
     'author',
     'status',
     'total_volumes',
+    'score',
+    'genres',
     'cover_url',
 ])]
 class Manga extends Model
@@ -70,6 +74,8 @@ class Manga extends Model
     {
         return [
             'total_volumes' => 'integer',
+            'score' => 'decimal:2',
+            'genres' => 'array',
         ];
     }
 }

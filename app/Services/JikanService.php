@@ -14,10 +14,10 @@ class JikanService
     ) {}
 
     /**
-     * Fallback popular manga dataset in French.
+     * Fallback popular manga dataset in French indexed by external_id.
      */
     protected array $fallbackPopular = [
-        [
+        '13' => [
             'external_id' => '13',
             'title' => 'One Piece',
             'original_title' => 'ONE PIECE',
@@ -29,7 +29,7 @@ class JikanService
             'score' => 9.22,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/2/253146l.webp',
         ],
-        [
+        '2' => [
             'external_id' => '2',
             'title' => 'Berserk',
             'original_title' => 'ベルセルク',
@@ -41,7 +41,7 @@ class JikanService
             'score' => 9.47,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/1/157897l.webp',
         ],
-        [
+        '25' => [
             'external_id' => '25',
             'title' => 'Fullmetal Alchemist',
             'original_title' => '鋼の錬金術師',
@@ -53,7 +53,7 @@ class JikanService
             'score' => 9.03,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/3/243675l.webp',
         ],
-        [
+        '44' => [
             'external_id' => '44',
             'title' => 'Vagabond',
             'original_title' => 'バガボンド',
@@ -65,7 +65,7 @@ class JikanService
             'score' => 9.24,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/1/259070l.webp',
         ],
-        [
+        '11' => [
             'external_id' => '11',
             'title' => 'Naruto',
             'original_title' => 'NARUTO -ナルト-',
@@ -77,7 +77,7 @@ class JikanService
             'score' => 8.08,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/3/117681l.webp',
         ],
-        [
+        '1' => [
             'external_id' => '1',
             'title' => 'Monster',
             'original_title' => 'MONSTER',
@@ -89,7 +89,7 @@ class JikanService
             'score' => 9.15,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/3/258224l.webp',
         ],
-        [
+        '21' => [
             'external_id' => '21',
             'title' => 'Death Note',
             'original_title' => 'DEATH NOTE',
@@ -101,7 +101,7 @@ class JikanService
             'score' => 8.68,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/2/54453l.webp',
         ],
-        [
+        '113138' => [
             'external_id' => '113138',
             'title' => 'Jujutsu Kaisen',
             'original_title' => '呪術廻戦',
@@ -113,7 +113,7 @@ class JikanService
             'score' => 8.44,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/3/210341l.webp',
         ],
-        [
+        '116778' => [
             'external_id' => '116778',
             'title' => 'Chainsaw Man',
             'original_title' => 'チェンソーマン',
@@ -125,7 +125,7 @@ class JikanService
             'score' => 8.51,
             'cover_url' => 'https://cdn.myanimelist.net/images/manga/3/216464l.webp',
         ],
-        [
+        '119161' => [
             'external_id' => '119161',
             'title' => 'Spy x Family',
             'original_title' => 'SPY×FAMILY',
@@ -146,7 +146,7 @@ class JikanService
      */
     public function getPopularMangas(int $limit = 12): array
     {
-        return Cache::remember("jikan_popular_mangas_fr_v3_{$limit}", now()->addHours(6), function () use ($limit) {
+        return Cache::remember("jikan_popular_mangas_fr_v4_{$limit}", now()->addHours(6), function () use ($limit) {
             try {
                 $response = Http::withoutVerifying()
                     ->withHeaders([
@@ -164,7 +164,15 @@ class JikanService
                 if ($response->successful()) {
                     $items = $response->json('data') ?? [];
                     if (! empty($items)) {
-                        return array_map(fn ($item) => $this->formatMangaData($item), $items);
+                        $formattedItems = [];
+                        foreach ($items as $item) {
+                            $formatted = $this->formatMangaData($item);
+                            // Store also individually in cache
+                            Cache::put("jikan_manga_fr_{$formatted['external_id']}", $formatted, now()->addHours(24));
+                            $formattedItems[] = $formatted;
+                        }
+
+                        return $formattedItems;
                     }
                 }
 
@@ -173,18 +181,26 @@ class JikanService
                 Log::error("Jikan API popular request error: {$e->getMessage()}");
             }
 
-            return array_slice($this->fallbackPopular, 0, $limit);
+            return array_values(array_slice($this->fallbackPopular, 0, $limit));
         });
     }
 
     /**
-     * Get specific manga by MAL ID with French translation.
+     * Get specific manga by MAL ID with French translation and fallback.
      *
      * @return array<string, mixed>|null
      */
     public function getMangaById(int|string $malId): ?array
     {
-        return Cache::remember("jikan_manga_fr_{$malId}", now()->addHours(24), function () use ($malId) {
+        $id = (string) $malId;
+
+        // 1. Check in fallback dataset first if present
+        if (isset($this->fallbackPopular[$id])) {
+            return $this->fallbackPopular[$id];
+        }
+
+        // 2. Fetch from Jikan API with caching
+        return Cache::remember("jikan_manga_fr_{$id}", now()->addHours(24), function () use ($id) {
             try {
                 $response = Http::withoutVerifying()
                     ->withHeaders([
@@ -192,7 +208,7 @@ class JikanService
                         'User-Agent' => 'MangaShelf/1.0',
                     ])
                     ->timeout(15)
-                    ->get("https://api.jikan.moe/v4/manga/{$malId}");
+                    ->get("https://api.jikan.moe/v4/manga/{$id}");
 
                 if ($response->successful()) {
                     $data = $response->json('data');
@@ -200,8 +216,10 @@ class JikanService
                         return $this->formatMangaData($data);
                     }
                 }
+
+                Log::warning("Jikan API failed for ID {$id} with status {$response->status()}");
             } catch (\Throwable $e) {
-                Log::error("Jikan API error for ID {$malId}: {$e->getMessage()}");
+                Log::error("Jikan API error for ID {$id}: {$e->getMessage()}");
             }
 
             return null;
@@ -234,7 +252,15 @@ class JikanService
                 if ($response->successful()) {
                     $items = $response->json('data') ?? [];
 
-                    return array_map(fn ($item) => $this->formatMangaData($item), $items);
+                    $formattedItems = [];
+                    foreach ($items as $item) {
+                        $formatted = $this->formatMangaData($item);
+                        // Save individually to cache so clicking on it from search works instantly
+                        Cache::put("jikan_manga_fr_{$formatted['external_id']}", $formatted, now()->addHours(24));
+                        $formattedItems[] = $formatted;
+                    }
+
+                    return $formattedItems;
                 }
             } catch (\Throwable $e) {
                 Log::error("Jikan API search error: {$e->getMessage()}");

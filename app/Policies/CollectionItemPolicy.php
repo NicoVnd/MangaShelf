@@ -31,7 +31,10 @@ class CollectionItemPolicy
             return true;
         }
 
-        return $collection->members()->where('user_id', $user->id)->exists();
+        return $collection->members()
+            ->where('user_id', $user->id)
+            ->where('status', 'accepted')
+            ->exists();
     }
 
     /**
@@ -59,6 +62,7 @@ class CollectionItemPolicy
 
         return $collection->members()
             ->where('user_id', $user->id)
+            ->where('status', 'accepted')
             ->whereIn('role', [CollectionMemberRole::Owner, CollectionMemberRole::Editor])
             ->exists();
     }
@@ -80,7 +84,8 @@ class CollectionItemPolicy
 
         return $collection->members()
             ->where('user_id', $user->id)
-            ->where('role', CollectionMemberRole::Owner)
+            ->where('status', 'accepted')
+            ->whereIn('role', [CollectionMemberRole::Owner, CollectionMemberRole::Editor])
             ->exists();
     }
 }

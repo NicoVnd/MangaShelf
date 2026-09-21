@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
     'collection_id',
     'user_id',
     'role',
+    'status',
 ])]
 class CollectionMember extends Model
 {

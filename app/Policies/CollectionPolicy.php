@@ -37,7 +37,10 @@ class CollectionPolicy
             return true;
         }
 
-        return $collection->members()->where('user_id', $user->id)->exists();
+        return $collection->members()
+            ->where('user_id', $user->id)
+            ->where('status', 'accepted')
+            ->exists();
     }
 
     /**
@@ -59,6 +62,7 @@ class CollectionPolicy
 
         return $collection->members()
             ->where('user_id', $user->id)
+            ->where('status', 'accepted')
             ->whereIn('role', [CollectionMemberRole::Owner, CollectionMemberRole::Editor])
             ->exists();
     }

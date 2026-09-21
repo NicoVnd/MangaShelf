@@ -73,15 +73,26 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Shared collections accessible to the user via memberships.
+     * Shared collections accessible to the user via accepted memberships.
      *
      * @return BelongsToMany<Collection, $this>
      */
     public function accessibleCollections(): BelongsToMany
     {
         return $this->belongsToMany(Collection::class, 'collection_members')
-            ->withPivot('role')
+            ->wherePivot('status', 'accepted')
+            ->withPivot(['role', 'status'])
             ->withTimestamps();
+    }
+
+    /**
+     * Pending invitations for shared collections.
+     *
+     * @return HasMany<CollectionMember, $this>
+     */
+    public function pendingInvitations(): HasMany
+    {
+        return $this->hasMany(CollectionMember::class)->where('status', 'pending');
     }
 
     /**
